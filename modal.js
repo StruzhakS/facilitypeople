@@ -713,7 +713,7 @@ async function renderRoutesList() {
   window.JABIL_ROUTES.forEach((route, idx) => {
     html += '<div style="border:1px solid #ccc;margin:10px;padding:10px">';
     html += `<b>${route.route_code}</b>`;
-    html += ` <button onclick="deleteRoute(${idx})">🗑</button>`;
+    html += ` <button onclick="deleteMapRoute(${idx})">🗑</button>`;
     html += ` <label style="margin-left:8px">Тип: <select onchange="updateRouteType(${idx}, this.value)">`;
     html += ` <option value="shift" ${route.type !== 'office' ? 'selected' : ''}>Позмінний</option>`;
     html += ` <option value="office" ${route.type === 'office' ? 'selected' : ''}>Офісний</option>`;
@@ -743,7 +743,7 @@ async function renderRoutesList() {
   container.innerHTML = html;
 }
 
-window.deleteRoute = async function(idx) {
+window.deleteMapRoute = async function(idx) {
   if (!confirm('Видалити маршрут?')) return;
 
   const route = window.JABIL_ROUTES[idx];

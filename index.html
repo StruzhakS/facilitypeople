@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Мапа працівників Jabil</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="assets/css/index.css" />
+</head>
+
+<body>
+  <input type="file" id="excelInput" class="hidden-file-input" accept=".xlsx,.xls" />
+
+  <div id="map"></div>
+  <!-- Бургер меню -->
+  <button id="burgerMenuBtn" class="burger-menu-btn">
+    <span class="burger-line"></span>
+    <span class="burger-line"></span>
+    <span class="burger-line"></span>
+  </button>
+
+  <!-- Меню -->
+  <div id="burgerMenu" class="burger-menu-panel">
+    <a href="index.html" class="menu-link">🗺️ Карта</a>
+    <a href="people.html" class="menu-link">👥 Люди</a>
+    <a href="routes.html" class="menu-link">🚌 Маршрути</a>
+  </div>
+
+  <div id="shiftBanner" class="shift-banner">
+    <div class="banner-header-row">
+      <div id="shiftBannerText" class="banner-text">Завантаження зміни...</div>
+      <button id="toggleShiftBanner" type="button" class="banner-toggle-btn">сховати</button>
+    </div>
+    <div id="shiftBannerBody">
+      <div id="shiftCalendar" class="shift-calendar"></div>
+    </div>
+  </div>
+  <div id="routeFilterBanner" class="route-filter-banner">
+    <div class="banner-header-row route-filter-header">
+      <label class="route-filter-label">
+        <input type="checkbox" id="routeFilterAll" checked />
+        <span>Виділити всі</span>
+      </label>
+      <button id="toggleRouteBanner" type="button" class="banner-toggle-btn">сховати</button>
+    </div>
+    <div id="routeFilterBannerBody">
+      <div id="routeFilterList"></div>
+    </div>
+  </div>
+  <button id="addRouteBtn">Додати
+    маршрут</button>
+
+  <div id="searchPersonWrap">
+    <input type="text" id="searchPerson" placeholder=" " />
+    <div id="searchPersonHint" aria-hidden="true"><span>Пошук за прізвищем або населеним пунктом</span></div>
+  </div>
+
+  <!-- Модальне вікно для списку маршрутів і людей -->
+  <div id="listModal" class="modal-overlay modal-with-scroll">
+    <div class="modal-card list-modal-card">
+      <span id="closeListModal" class="modal-close-btn">&times;</span>
+      <h2>Всі маршрути та люди</h2>
+      <div id="routesList"></div>
+    </div>
+  </div>
+
+  <!-- Модальне вікно для додавання маршруту -->
+  <div id="routeModal" class="modal-overlay">
+    <div class="modal-card route-modal-card">
+      <span id="closeRouteModal" class="modal-close-btn">&times;</span>
+      <h2>Додати маршрут</h2>
+      <form id="routeForm">
+        <label>Номер маршруту:<br><input type="text" name="route_code" required></label><br><br>
+        <label>Колір маршруту:<br><input type="color" name="color" value="#e41a1c"></label><br><br>
+        <div class="route-shifts-wrap">
+          <div class="route-section-title">Зміни маршруту:</div>
+          <label class="mr8"><input type="checkbox" name="route_shifts" value="A"> A</label>
+          <label class="mr8"><input type="checkbox" name="route_shifts" value="B"> B</label>
+          <label class="mr8"><input type="checkbox" name="route_shifts" value="C"> C</label>
+          <label class="mr8"><input type="checkbox" name="route_shifts" value="D"> D</label>
+          <label><input type="checkbox" name="route_shifts" value="Офіс"> Офіс</label>
+        </div>
+        <label>Зупинки (через кому):<br><input type="text" name="stops" id="stopsInput"
+            placeholder="наприклад: Мукачево, Свалява, Розівка" required></label>
+        <button type="button" id="pickOnMapBtn" class="ml8">Вибрати на мапі</button>
+        <div id="pickedStopsList" class="mt10"></div>
+        <div id="miniMapContainer" class="map-picker-container">
+          <div id="miniMap" class="route-mini-map"></div>
+          <button type="button" id="finishPickBtn" class="mt8">Завершити вибір</button>
+        </div>
+        <div id="routeScheduleEditor" class="route-schedule-editor">
+          <div class="route-schedule-header">
+            <div class="route-schedule-title">Графік (JSON schedule)</div>
+            <button type="button" id="addScheduleGroupBtn">+ Додати групу</button>
+          </div>
+          <div id="scheduleStopsHint" class="route-schedule-hint">Зупинки для графіка: спочатку додайте/виберіть зупинки</div>
+          <div id="scheduleGroups" class="route-schedule-groups"></div>
+        </div>
+        <br>
+        <div class="route-actions-row">
+          <button type="button" id="routeDeleteBtn">Видалити</button>
+          <button type="submit" id="routeSubmitBtn">Додати</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Модальне вікно для додавання людини -->
+  <div id="personModal" class="modal-overlay">
+    <div class="modal-card person-modal-card">
+      <span id="closePersonModal" class="modal-close-btn">&times;</span>
+      <h2>Додати людину</h2>
+      <form id="personForm">
+        <label>Населений пункт:<br><input type="text" id="personSettlementInput" name="settlement" required></label>
+        <button type="button" id="pickPersonOnMapBtn" class="pick-person-btn">Вибрати на мапі</button>
+        <div id="personMiniMapContainer" class="map-picker-container">
+          <div id="personMiniMap" class="person-mini-map"></div>
+          <button type="button" id="finishPersonPickBtn" class="mt8">Завершити вибір</button>
+        </div><br>
+        <label>Зміна:<br>
+          <select name="shift" required>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+        </label><br><br>
+        <label>Кількість:<br><input type="number" name="count" min="1" value="1" required></label><br><br>
+        <button type="submit">Додати</button>
+      </form>
+    </div>
+  </div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="assets/js/config/app-config.js"></script>
+  <script src="assets/js/shared/burger-menu.js"></script>
+  <script src="modal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="excel.js"></script>
+  <script src="assets/js/pages/index-page.js"></script>
+</body>
+
+</html>

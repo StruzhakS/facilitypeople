@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Маршрути - Jabil</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="assets/css/routes.css" />
+</head>
+<body>
+  <!-- Бургер меню -->
+  <button id="burgerMenuBtn">
+    <span class="burger-line"></span>
+    <span class="burger-line"></span>
+    <span class="burger-line"></span>
+  </button>
+
+  <div id="burgerMenu">
+    <a href="index.html">🗺️ Карта</a>
+    <a href="people.html">👥 Люди</a>
+    <a href="routes.html">🚌 Маршрути</a>
+  </div>
+
+  <div class="container">
+    <h1>🚌 Маршрути</h1>
+    
+    <div class="controls">
+      <button class="btn btn-primary" id="addRouteBtn">+ Додати маршрут</button>
+    </div>
+
+    <table id="routesTable">
+      <thead>
+        <tr>
+          <th>Код</th>
+          <th>Колір</th>
+          <th>Зміни</th>
+          <th>Зупинок</th>
+          <th>Тип</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody id="routesList">
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Та сама модалка додавання маршруту, що й на мапі -->
+  <div id="routeModal" class="modal-overlay">
+    <div class="route-modal-card">
+      <span id="closeRouteModal" class="route-modal-close">&times;</span>
+      <h2>Додати маршрут</h2>
+      <form id="routeForm">
+        <label>Номер маршруту:<br><input type="text" name="route_code" required></label><br><br>
+        <label>Колір маршруту:<br><input type="color" name="color" value="#e41a1c"></label><br><br>
+        <div class="route-shifts-wrap">
+          <div class="route-section-title">Зміни маршруту:</div>
+          <label class="mr8"><input type="checkbox" name="route_shifts" value="A"> A</label>
+          <label class="mr8"><input type="checkbox" name="route_shifts" value="B"> B</label>
+          <label class="mr8"><input type="checkbox" name="route_shifts" value="C"> C</label>
+          <label class="mr8"><input type="checkbox" name="route_shifts" value="D"> D</label>
+          <label><input type="checkbox" name="route_shifts" value="Офіс"> Офіс</label>
+        </div>
+        <label>Зупинки (через кому):<br><input type="text" name="stops" id="stopsInput"
+            placeholder="наприклад: Мукачево, Свалява, Розівка" required></label>
+        <button type="button" id="pickOnMapBtn" class="ml8">Вибрати на мапі</button>
+        <div id="pickedStopsList" class="mt10"></div>
+        <div id="miniMapContainer" class="map-picker-container">
+          <div id="miniMap" class="route-mini-map"></div>
+          <button type="button" id="finishPickBtn" class="mt8">Завершити вибір</button>
+        </div>
+        <div id="routeScheduleEditor" class="route-schedule-editor">
+          <div class="route-schedule-header">
+            <div class="route-schedule-title">Графік (JSON schedule)</div>
+            <button type="button" id="addScheduleGroupBtn">+ Додати групу</button>
+          </div>
+          <div id="scheduleStopsHint" class="route-schedule-hint">Зупинки для графіка: спочатку додайте/виберіть зупинки</div>
+          <div id="scheduleGroups" class="route-schedule-groups"></div>
+        </div>
+        <br>
+        <div class="route-actions-row">
+          <button type="button" id="routeDeleteBtn">Видалити</button>
+          <button type="submit" id="routeSubmitBtn">Додати</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="assets/js/config/app-config.js"></script>
+  <script src="assets/js/shared/burger-menu.js"></script>
+  <script src="assets/js/pages/routes-page.js"></script>
+  <script src="modal.js"></script>
+</body>
+</html>

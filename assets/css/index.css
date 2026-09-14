@@ -1,0 +1,457 @@
+#map {
+  height: 100vh;
+  width: 100vw;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.burger-menu-btn {
+  position: fixed;
+  top: 35px;
+  right: 8px;
+  z-index: 10010;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.burger-line {
+  width: 24px;
+  height: 2px;
+  background: #333;
+}
+
+.burger-menu-panel {
+  display: none;
+  position: fixed;
+  top: 54px;
+  right: 8px;
+  z-index: 10009;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+}
+
+.menu-link {
+  display: block;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: #333;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 500;
+}
+
+.menu-link:last-child {
+  border-bottom: none;
+}
+
+.shift-banner {
+  position: fixed;
+  top: 35px;
+  right: 56px;
+  z-index: 10005;
+  padding: 10px 14px;
+  background: #ffffffdd;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+  min-width: 260px;
+  transform: scale(0.86);
+  transform-origin: top right;
+  font-size: 16px;
+}
+
+#shiftBanner,
+#shiftBanner * {
+  font-size: 16px;
+}
+
+.banner-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.banner-text {
+  min-width: 0;
+}
+
+.banner-toggle-btn {
+  border: none;
+  background: #f1f1f1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.shift-calendar {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+  background: transparent;
+  padding: 2px;
+  min-height: 40px;
+}
+
+.route-filter-banner {
+  position: fixed;
+  top: 190px;
+  left: 20px;
+  z-index: 10005;
+  padding: 12px;
+  background: #ffffffee;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  font-size: 13px;
+  backdrop-filter: blur(4px);
+  max-height: 70vh;
+  overflow: auto;
+  width: 325px;
+  /* max-width: 300px; */
+  box-sizing: border-box;
+}
+
+.route-filter-header {
+  margin-bottom: 8px;
+}
+
+.route-filter-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.leaflet-popup-content {
+  font-size: 1.1em;
+}
+
+.circle-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: black;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+/* Active shift - pulsing glow */
+.active-shift {
+  animation: shiftPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes shiftPulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 0 rgba(72, 255, 0, 0.8);
+  }
+
+  50% {
+    box-shadow: inset 0 0 10px 3px rgba(255, 81, 0, 0.3);
+  }
+}
+
+.search-highlight {
+  animation: searchPulse 1.05s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px rgba(168, 85, 247, 1));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.route-popup-wide .leaflet-popup-content {
+  margin: 10px 12px;
+  max-width: min(92vw, 900px);
+  width: auto !important;
+}
+
+#addRouteBtn {
+  position: fixed;
+  top: 95px;
+  left: 20px;
+  z-index: 1001;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+  box-shadow: 0 8px 18px rgba(29, 78, 216, 0.28);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#addRouteBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(29, 78, 216, 0.35);
+}
+
+#routeModal > div {
+  background: #ffffff;
+  padding: 24px 32px;
+  border-radius: 14px;
+  min-width: 320px;
+  max-width: 90vw;
+  max-height: 92vh;
+  overflow: auto;
+  position: relative;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.22);
+}
+
+#routeModal input[type="text"],
+#routeModal input[type="color"] {
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 9px 11px;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+#routeModal button {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#routeModal #pickOnMapBtn,
+#routeModal #finishPickBtn,
+#routeModal #addScheduleGroupBtn {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+#routeModal #routeSubmitBtn,
+#routeModal button[type="submit"] {
+  background: #1d4ed8;
+  color: #ffffff;
+  min-width: 130px;
+}
+
+#routeModal #routeDeleteBtn {
+  background: #dc2626;
+  color: #ffffff;
+  display: none;
+}
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-with-scroll {
+  overflow: auto;
+}
+
+.modal-card {
+  background: #fff;
+  padding: 24px 32px;
+  border-radius: 8px;
+  min-width: 320px;
+  max-width: 90vw;
+  position: relative;
+}
+
+.list-modal-card {
+  min-width: 340px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  cursor: pointer;
+  font-size: 1.5em;
+}
+
+.route-shifts-wrap {
+  margin-bottom: 10px;
+}
+
+.route-section-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.mr8 {
+  margin-right: 8px;
+}
+
+.ml8 {
+  margin-left: 8px;
+}
+
+.mt10 {
+  margin: 10px 0 0 0;
+}
+
+.mt8 {
+  margin-top: 8px;
+}
+
+.route-schedule-editor {
+  margin-top: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.route-schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.route-schedule-title {
+  font-weight: 700;
+}
+
+.route-schedule-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+.route-schedule-groups {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.route-actions-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.map-picker-container {
+  display: none;
+  margin: 10px 0 0 0;
+}
+
+.route-mini-map {
+  width: 75vh;
+  height: 600px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.person-mini-map {
+  width: 75vh;
+  height: 420px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.pick-person-btn {
+  margin: 8px 0 0 0;
+}
+
+#searchPersonWrap {
+  position: fixed;
+  top: 140px;
+  left: 20px;
+  z-index: 1001;
+  width: 320px;
+  max-width: calc(100vw - 40px);
+}
+
+#searchPerson {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9em;
+  box-sizing: border-box;
+  background: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+#searchPersonHint {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+  color: #6b7280;
+  opacity: 0.9;
+  z-index: 2;
+}
+
+#searchPersonHint span {
+  display: inline-block;
+  padding-right: 22px;
+  animation: searchHintMarquee 12s linear infinite;
+}
+
+#searchPerson:focus + #searchPersonHint,
+#searchPerson:not(:placeholder-shown) + #searchPersonHint {
+  display: none;
+}
+
+@keyframes searchHintMarquee {
+  0% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes searchPulse {
+  0%,
+  100% {
+    stroke: #a855f7;
+    stroke-width: 4px;
+    opacity: 1;
+  }
+
+  50% {
+    stroke: #7c3aed;
+    stroke-width: 10px;
+    opacity: 1;
+  }
+}

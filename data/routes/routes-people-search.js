@@ -383,15 +383,31 @@ async function loadAndDrawPeople(providedPeople) {
     if (!cityRaw) return;
 
     const city = cityRaw.toLowerCase();
+    const carrier = typeof window.getCarrierOption === 'function'
+      ? window.getCarrierOption(p.carrier)
+      : { name: 'Jabil', color: '#2563eb' };
+    const carrierName = carrier.name;
+    const color = carrier.color;
     const shift = normalizeShiftValue(p.shift);
     if (!shift) return;
 
-    if (!cityMap[city]) {
-      cityMap[city] = { A: 0, B: 0, C: 0, D: 0, Офіс: 0, total: 0 };
+    const groupKey = `${city}|${carrierName}|${color}`;
+    if (!cityMap[groupKey]) {
+      cityMap[groupKey] = {
+        city,
+        carrier: carrierName,
+        color,
+        A: 0,
+        B: 0,
+        C: 0,
+        D: 0,
+        Офіс: 0,
+        total: 0
+      };
     }
 
-    cityMap[city][shift]++;
-    cityMap[city].total++;
+    cityMap[groupKey][shift]++;
+    cityMap[groupKey].total++;
   });
 
   // ✅ максимум
@@ -457,8 +473,15 @@ async function loadAndDrawPeople(providedPeople) {
   window.personMarkers = {}; // очистити маркери перед перемальовуванням
   window.allPeople = people; // зберегти всіх людей для пошуку
 
-  for (const city in cityMap) {
-    const data = cityMap[city];
+  const groupsByCity = {};
+  Object.values(cityMap).forEach(data => {
+    if (!groupsByCity[data.city]) groupsByCity[data.city] = [];
+    groupsByCity[data.city].push(data);
+  });
+
+  for (const groupKey in cityMap) {
+    const data = cityMap[groupKey];
+    const city = data.city;
 
     let settlement = await resolveSettlement(city);
     if (!settlement) {
@@ -478,10 +501,18 @@ async function loadAndDrawPeople(providedPeople) {
       continue;
     }
 
-    const color = getColor(data.total);
+    const color = data.color;
     const radius = getRadius(data.total);
+    const cityGroups = groupsByCity[city];
+    const groupIndex = cityGroups.indexOf(data);
+    const groupCount = cityGroups.length;
+    const angle = (Math.PI * 2 * groupIndex) / groupCount;
+    const spread = groupCount > 1 ? 0.0025 : 0;
+    const markerLat = settlement.lat + Math.sin(angle) * spread;
+    const markerLng = settlement.lng + Math.cos(angle) * spread;
     const popup = `
       <b>${settlement.name}</b><br>
+      Перевізник: <b>${data.carrier}</b><br>
       <table style="border-collapse:collapse;text-align:center">
         <tr><th>A</th><th>B</th><th>C</th><th>D</th><th>Офіс</th><th>Всього</th></tr>
         <tr>
@@ -495,7 +526,7 @@ async function loadAndDrawPeople(providedPeople) {
       </table>
     `;
 
-    const marker = L.circleMarker([settlement.lat, settlement.lng], {
+    const marker = L.circleMarker([markerLat, markerLng], {
       radius,
       color,
       fillColor: color,
@@ -511,7 +542,7 @@ async function loadAndDrawPeople(providedPeople) {
     }
     window.personMarkers[settlement.name].push(marker);
 
-    marker.bindTooltip(`${settlement.name} (${data.total})`, {
+    marker.bindTooltip(settlement.name, {
       permanent: true,
       direction: 'top',
       offset: [0, -radius - 5],

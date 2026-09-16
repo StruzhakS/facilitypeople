@@ -1,3 +1,4 @@
+(() => {
 const db = window.createAppDb();
 const tables = window.getTenantTables();
 
@@ -7,6 +8,17 @@ let settlementsList = null;
 let personMiniMap = null;
 let personPickMarker = null;
 let lastSelectedSettlement = null;
+
+const personCarrierSelect = document.getElementById('personCarrier');
+const personColorInput = document.getElementById('personColor');
+if (personCarrierSelect && typeof window.getCarrierOptionsHtml === 'function') {
+  personCarrierSelect.innerHTML = window.getCarrierOptionsHtml('Jabil');
+  window.bindCarrierEditor(
+    personCarrierSelect,
+    personColorInput,
+    document.getElementById('renamePersonCarrier')
+  );
+}
 
 function normalizeText(value) {
   return String(value || '').trim().toLowerCase();
@@ -24,9 +36,16 @@ async function refreshSettlementsFromDb() {
     }
 
     if (Array.isArray(dbSettlements)) {
-      settlementsList = dbSettlements;
+      const merged = new Map();
+      for (const item of settlementsList || []) {
+        if (item && item.name) merged.set(normalizeText(item.name), item);
+      }
+      for (const item of dbSettlements) {
+        if (item && item.name) merged.set(normalizeText(item.name), item);
+      }
+      settlementsList = Array.from(merged.values());
       if (typeof window !== 'undefined') {
-        window.settlementsList = dbSettlements;
+        window.settlementsList = settlementsList;
       }
     }
   } catch (err) {
@@ -93,7 +112,46 @@ function findNearestSettlement(lat, lng) {
   return nearest;
 }
 
-function resolveSettlementFromClick(lat, lng) {
+function requestSettlementName() {
+  return new Promise(resolve => {
+    const modal = document.createElement('div');
+    modal.className = 'modal active settlement-name-modal';
+    modal.innerHTML = `
+      <div class="modal-content settlement-name-dialog">
+        <h2>Вкажіть населений пункт</h2>
+        <p>Введіть правильну назву НП для збереження.</p>
+        <input type="text" class="settlement-name-input" required autofocus>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary settlement-cancel-btn">Скасувати</button>
+          <button type="button" class="btn btn-primary settlement-save-btn">Зберегти</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const input = modal.querySelector('.settlement-name-input');
+    const close = value => {
+      modal.remove();
+      resolve(value);
+    };
+
+    modal.querySelector('.settlement-save-btn').addEventListener('click', () => {
+      const name = input.value.trim();
+      if (name) close(name);
+    });
+    modal.querySelector('.settlement-cancel-btn').addEventListener('click', () => close(null));
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        modal.querySelector('.settlement-save-btn').click();
+      }
+      if (event.key === 'Escape') close(null);
+    });
+    input.focus();
+  });
+}
+
+async function resolveSettlementFromClick(lat, lng) {
   const settlement = findNearestSettlement(lat, lng);
 
   let name;
@@ -109,7 +167,7 @@ function resolveSettlementFromClick(lat, lng) {
   }
 
   if (!name) {
-    name = prompt('Введи назву НП');
+    name = await requestSettlementName();
     if (!name) return null;
   }
 
@@ -191,8 +249,13 @@ function initPersonMiniMap() {
 
   personMiniMap.on('click', async (e) => {
     await ensureSettlementsLoaded();
-    const selected = resolveSettlementFromClick(e.latlng.lat, e.latlng.lng);
+    const selected = await resolveSettlementFromClick(e.latlng.lat, e.latlng.lng);
     if (!selected) return;
+
+    if (!Number.isFinite(Number(selected.lat)) || !Number.isFinite(Number(selected.lng))) {
+      alert('Не вдалося визначити координати населеного пункту. Виберіть точку на карті ще раз.');
+      return;
+    }
 
     lastSelectedSettlement = selected;
 
@@ -203,7 +266,7 @@ function initPersonMiniMap() {
       personMiniMap.removeLayer(personPickMarker);
     }
 
-    personPickMarker = L.marker([selected.lat, selected.lng]).addTo(personMiniMap)
+    personPickMarker = L.marker([Number(selected.lat), Number(selected.lng)]).addTo(personMiniMap)
       .bindPopup(selected.name)
       .openPopup();
   });
@@ -216,7 +279,9 @@ async function loadPeople() {
     const res = await fetch('data/people.json');
     const jsonPeople = await res.json();
     const { data: dbPeople } = await db.from(tables.people).select('*');
-    people = [...jsonPeople, ...(dbPeople || [])];
+    people = typeof window.applyPersonMetadata === 'function'
+      ? window.applyPersonMetadata([...jsonPeople, ...(dbPeople || [])])
+      : [...jsonPeople, ...(dbPeople || [])];
     renderPeople();
   } catch (err) {
     console.error('Error loading people:', err);
@@ -225,10 +290,12 @@ async function loadPeople() {
 
 function renderPeople() {
   const tbody = document.getElementById('peopleList');
-  const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+  const searchBox = document.getElementById('searchBox');
+  if (!tbody || !searchBox) return;
+  const searchTerm = searchBox.value.toLowerCase();
 
   const filtered = people.filter(p => {
-    const text = `${p.name} ${p.city} ${p.shift}`.toLowerCase();
+    const text = `${p.name} ${p.city} ${p.shift} ${p.carrier || 'Jabil'}`.toLowerCase();
     return text.includes(searchTerm);
   });
 
@@ -237,9 +304,10 @@ function renderPeople() {
       <td>${p.name}</td>
       <td>${p.city}</td>
       <td>${p.shift}</td>
+      <td>${p.carrier || 'Jabil'}</td>
       <td>
         <div class="row-actions">
-          <button class="btn btn-secondary" onclick="editPerson('${p.id}', '${p.name}', '${p.city}', '${p.shift}')">✏️ Редагувати</button>
+          <button class="btn btn-secondary" onclick="editPerson('${p.id}', '${p.name}', '${p.city}', '${p.shift}', '${p.carrier || 'Jabil'}', '${p.color || '#2563eb'}')">✏️ Редагувати</button>
           <button class="btn btn-danger" onclick="deletePerson('${p.id}')">🗑️ Видалити</button>
         </div>
       </td>
@@ -247,28 +315,34 @@ function renderPeople() {
   `).join('');
 }
 
-document.getElementById('addPersonBtn').addEventListener('click', () => {
+const addPersonButton = document.getElementById('addPersonBtn');
+if (addPersonButton) addPersonButton.addEventListener('click', () => {
   editingPersonId = null;
   lastSelectedSettlement = null;
   document.getElementById('modalTitle').textContent = 'Додати людину';
   document.getElementById('personName').value = '';
   document.getElementById('personCity').value = '';
   document.getElementById('personShift').value = 'A';
+  document.getElementById('personCarrier').value = 'Jabil';
+  document.getElementById('personColor').value = window.getCarrierOption('Jabil').color;
   document.getElementById('personMiniMapContainer').style.display = 'none';
   document.getElementById('editModal').classList.add('active');
 });
 
-window.editPerson = (id, name, city, shift) => {
+window.editPerson = (id, name, city, shift, carrier, color) => {
   editingPersonId = id;
   document.getElementById('modalTitle').textContent = 'Редагувати людину';
   document.getElementById('personName').value = name;
   document.getElementById('personCity').value = city;
   document.getElementById('personShift').value = shift;
+  document.getElementById('personCarrier').value = carrier || 'Jabil';
+  document.getElementById('personColor').value = window.getCarrierOption(carrier || 'Jabil').color;
   document.getElementById('personMiniMapContainer').style.display = 'none';
   document.getElementById('editModal').classList.add('active');
 };
 
-document.getElementById('pickCityOnMapBtn').addEventListener('click', async () => {
+const pickCityButton = document.getElementById('pickCityOnMapBtn');
+if (pickCityButton) pickCityButton.addEventListener('click', async () => {
   await ensureSettlementsLoaded();
   const container = document.getElementById('personMiniMapContainer');
   container.style.display = 'block';
@@ -276,15 +350,19 @@ document.getElementById('pickCityOnMapBtn').addEventListener('click', async () =
   if (personMiniMap) personMiniMap.invalidateSize();
 });
 
-document.getElementById('finishCityPickBtn').addEventListener('click', () => {
+const finishCityButton = document.getElementById('finishCityPickBtn');
+if (finishCityButton) finishCityButton.addEventListener('click', () => {
   document.getElementById('personMiniMapContainer').style.display = 'none';
 });
 
-document.getElementById('personForm').addEventListener('submit', async (e) => {
+const personForm = document.getElementById('personForm');
+if (personForm) personForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = document.getElementById('personName').value.trim();
   const cityRaw = document.getElementById('personCity').value.trim();
   const shift = document.getElementById('personShift').value;
+  const carrier = document.getElementById('personCarrier').value;
+  const color = document.getElementById('personColor').value;
 
   if (!name || !cityRaw) {
     alert('Заповніть ім’я та населений пункт');
@@ -308,26 +386,36 @@ document.getElementById('personForm').addEventListener('submit', async (e) => {
   const city = settlement.name;
 
   try {
-    if (editingPersonId) {
-      await db.from(tables.people).update({ name, city, shift }).eq('id', editingPersonId);
-    } else {
-      await db.from(tables.people).insert([{ name, city, shift }]);
-    }
+    const result = await window.savePersonRecord(
+      db,
+      tables.people,
+      { name, city, shift, carrier, color },
+      editingPersonId
+    );
+    if (result.error) throw result.error;
     document.getElementById('editModal').classList.remove('active');
     lastSelectedSettlement = null;
     await refreshSettlementsFromDb();
-    loadPeople();
+    await loadPeople();
+
+    if (typeof window.loadAndDrawPeople === 'function' && typeof window.fetchAllPeople === 'function') {
+      if (window._peopleCache) window._peopleCache = { ts: 0, data: null };
+      const refreshedPeople = await window.fetchAllPeople(true);
+      await window.loadAndDrawPeople(refreshedPeople);
+    }
   } catch (err) {
     alert('Помилка: ' + err.message);
   }
 });
 
-document.getElementById('closeEditModal').addEventListener('click', () => {
+const closeEditButton = document.getElementById('closeEditModal');
+if (closeEditButton) closeEditButton.addEventListener('click', () => {
   document.getElementById('personMiniMapContainer').style.display = 'none';
   document.getElementById('editModal').classList.remove('active');
 });
 
-document.getElementById('cancelEditBtn').addEventListener('click', () => {
+const cancelEditButton = document.getElementById('cancelEditBtn');
+if (cancelEditButton) cancelEditButton.addEventListener('click', () => {
   document.getElementById('personMiniMapContainer').style.display = 'none';
   document.getElementById('editModal').classList.remove('active');
 });
@@ -342,6 +430,8 @@ window.deletePerson = async (id) => {
   }
 };
 
-document.getElementById('searchBox').addEventListener('input', renderPeople);
+const searchBox = document.getElementById('searchBox');
+if (searchBox) searchBox.addEventListener('input', renderPeople);
 
 loadPeople();
+})();

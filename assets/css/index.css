@@ -100,6 +100,36 @@
   font-size: 12px;
 }
 
+.carrier-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.carrier-edit-btn {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f3f4f6;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.carrier-name-input {
+  width: 150px;
+  box-sizing: border-box;
+  padding: 5px 7px;
+  border: 1px solid #9ca3af;
+  border-radius: 6px;
+}
+
+.carrier-cancel-btn {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f3f4f6;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
 .shift-calendar {
   display: flex;
   gap: 6px;
@@ -198,6 +228,28 @@
   box-shadow: 0 8px 18px rgba(29, 78, 216, 0.28);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#addPersonBtn {
+  position: fixed;
+  top: 95px;
+  left: 190px;
+  z-index: 1001;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  box-shadow: 0 8px 18px rgba(21, 128, 61, 0.28);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#addPersonBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(21, 128, 61, 0.35);
 }
 
 #addRouteBtn:hover {

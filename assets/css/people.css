@@ -216,6 +216,36 @@ tr:hover {
   margin-bottom: 16px;
 }
 
+.carrier-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.carrier-edit-btn {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f3f4f6;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.carrier-name-input {
+  width: 150px;
+  box-sizing: border-box;
+  padding: 5px 7px;
+  border: 1px solid #9ca3af;
+  border-radius: 6px;
+}
+
+.carrier-cancel-btn {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f3f4f6;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 6px;
@@ -254,4 +284,26 @@ tr:hover {
 
 .finish-pick-btn {
   margin-top: 8px;
+}
+
+.settlement-name-modal {
+  z-index: 3000;
+}
+
+.settlement-name-dialog {
+  width: min(420px, 90vw);
+}
+
+.settlement-name-dialog p {
+  margin: 8px 0 14px;
+  color: #6b7280;
+}
+
+.settlement-name-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
 }

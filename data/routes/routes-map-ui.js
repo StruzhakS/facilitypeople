@@ -19,7 +19,7 @@ function ensureRouteFilterBanner() {
   banner.style.boxShadow = '0 4px 14px rgba(0,0,0,0.16)';
   banner.style.fontSize = '13px';
   banner.style.backdropFilter = 'blur(4px)';
-  banner.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;"><label style="display:flex;align-items:center;gap:6px;font-weight:700;cursor:pointer;min-width:0;"><input type="checkbox" id="routeFilterAll" checked /><span>Виділити всі</span></label><button id="toggleRouteBanner" type="button" style="border:none;background:#f1f1f1;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">хов.</button></div><div id="routeFilterBannerBody"><div id="routeFilterList"></div></div>`;
+  banner.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;"><label style="display:flex;align-items:center;gap:6px;font-weight:700;cursor:pointer;min-width:0;"><input type="checkbox" id="routeFilterAll" /><span>Виділити всі</span></label><button id="toggleRouteBanner" type="button" style="border:none;background:#f1f1f1;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;">показати</button></div><div id="routeFilterBannerBody" style="display:none"><div id="routeFilterList"></div></div>`;
   document.body.appendChild(banner);
   return banner;
 }
@@ -76,6 +76,10 @@ function renderRouteFilterBanner() {
   if (!Array.isArray(window.JABIL_ROUTES) || !window.JABIL_ROUTES.length) return;
   const banner = ensureRouteFilterBanner();
   ensureRouteBannerControls();
+  if (!window.routeVisibilityInitialized) {
+    window.routeVisibilityState = {};
+    window.routeVisibilityInitialized = true;
+  }
   const list = banner.querySelector('#routeFilterList');
   if (!list) return;
 
@@ -126,7 +130,7 @@ function renderRouteFilterBanner() {
 
     const savedVisibility = window.routeVisibilityState && Object.prototype.hasOwnProperty.call(window.routeVisibilityState, String(route._rowId))
       ? window.routeVisibilityState[String(route._rowId)]
-      : true;
+      : false;
     row.dataset.routeId = String(route._rowId);
     row.dataset.checked = savedVisibility ? '1' : '0';
     row.setAttribute('role', 'button');
@@ -170,8 +174,10 @@ function renderRouteFilterBanner() {
     });
 
     row.appendChild(text);
+    const active = String(row.dataset.checked) === '1';
     applyRouteCardState(row, row, text);
     list.appendChild(row);
+    setRouteVisible(route, active);
   });
 
   refreshRouteFilterAllState();
@@ -245,7 +251,9 @@ async function fetchAllPeople(force = false) {
 
   if (error) console.error('Error loading people from DB:', error);
 
-  const people = [...jsonPeople, ...(dbPeople || [])];
+  const people = typeof window.applyPersonMetadata === 'function'
+    ? window.applyPersonMetadata([...jsonPeople, ...(dbPeople || [])])
+    : [...jsonPeople, ...(dbPeople || [])];
   window._peopleCache = { ts: now, data: people };
   return people;
 }

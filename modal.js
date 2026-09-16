@@ -75,8 +75,6 @@ function findNearestSettlement(lat, lng) {
 }
 
 let miniMap = null;
-let personMiniMap = null;
-let personPickMarker = null;
 
 function resolveSettlementFromClick(lat, lng) {
   const settlement = findNearestSettlement(lat, lng);
@@ -124,37 +122,6 @@ function initMiniMap() {
       });
       window.updatePickedStopsList();
     }
-  });
-}
-
-function initPersonMiniMap() {
-  if (personMiniMap) {
-    personMiniMap.invalidateSize();
-    return;
-  }
-
-  personMiniMap = L.map('personMiniMap').setView([48.6175, 22.2731], 10);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 18
-  }).addTo(personMiniMap);
-
-  personMiniMap.on('click', function (e) {
-    const selected = resolveSettlementFromClick(e.latlng.lat, e.latlng.lng);
-    if (!selected) return;
-
-    const personSettlementInput = document.getElementById('personSettlementInput');
-    if (personSettlementInput) {
-      personSettlementInput.value = selected.name;
-    }
-
-    if (personPickMarker) {
-      personMiniMap.removeLayer(personPickMarker);
-    }
-
-    personPickMarker = L.marker([selected.lat, selected.lng]).addTo(personMiniMap)
-      .bindPopup(selected.name)
-      .openPopup();
   });
 }
 
@@ -456,21 +423,6 @@ if (_finishPickBtn) _finishPickBtn.onclick = function () {
   if (_miniMapContainer2) _miniMapContainer2.style.display = 'none';
 };
 
-const _pickPersonOnMapBtn = document.getElementById('pickPersonOnMapBtn');
-if (_pickPersonOnMapBtn) _pickPersonOnMapBtn.onclick = function () {
-  const personContainer = document.getElementById('personMiniMapContainer');
-  if (personContainer) personContainer.style.display = 'block';
-
-  initPersonMiniMap();
-  if (personMiniMap) personMiniMap.invalidateSize();
-};
-
-const _finishPersonPickBtn = document.getElementById('finishPersonPickBtn');
-if (_finishPersonPickBtn) _finishPersonPickBtn.onclick = function () {
-  const personContainer = document.getElementById('personMiniMapContainer');
-  if (personContainer) personContainer.style.display = 'none';
-};
-
 // ===== UPDATE SPISOK =====
 window.updatePickedStopsList = function () {
   let html = '';
@@ -580,37 +532,6 @@ if (_routeForm) _routeForm.onsubmit = async function (e) {
   }
 };
 
-// ===== ДОДАТИ ЛЮДИНУ =====
-const _personForm = document.getElementById('personForm');
-if (_personForm) _personForm.onsubmit = async function (e) {
-  e.preventDefault();
-
-  const f = e.target;
-
-  const newPerson = {
-    name: 'manual',
-    city: f.settlement.value.trim(),
-    shift: f.shift.value
-  };
-
-  console.log('SAVE PERSON:', newPerson);
-
-  const peopleTable = window.getTableName ? window.getTableName('people') : 'people';
-  const { data, error } = await window.db
-    .from(peopleTable)
-    .insert([newPerson]);
-
-  console.log('INSERT PERSON:', data, error);
-
-  if (!error) {
-    loadAndDrawPeople();
-  }
-
-  f.reset();
-  const _personModal = document.getElementById('personModal');
-  if (_personModal) _personModal.style.display = 'none';
-};
-
 // ===== ВІДКРИТТЯ / ЗАКРИТТЯ МОДАЛОК =====
 const _addRouteBtn = document.getElementById('addRouteBtn');
 if (_addRouteBtn) _addRouteBtn.onclick = function() {
@@ -657,20 +578,6 @@ if (_routeDeleteBtn) _routeDeleteBtn.onclick = async function() {
   }
 };
 
-const _addPersonBtn = document.getElementById('addPersonBtn');
-if (_addPersonBtn) _addPersonBtn.onclick = function() {
-  const _personModal2 = document.getElementById('personModal');
-  if (_personModal2) _personModal2.style.display = 'flex';
-};
-
-const _closePersonModal = document.getElementById('closePersonModal');
-if (_closePersonModal) _closePersonModal.onclick = function() {
-  const personContainer = document.getElementById('personMiniMapContainer');
-  if (personContainer) personContainer.style.display = 'none';
-  const _personModal3 = document.getElementById('personModal');
-  if (_personModal3) _personModal3.style.display = 'none';
-};
-
 const _showListBtn = document.getElementById('showListBtn');
 if (_showListBtn) _showListBtn.onclick = function() {
   renderRoutesList();
@@ -685,11 +592,11 @@ window.onclick = function(event) {
     setRouteModalUiMode('create');
     _routeModal4.style.display = 'none';
   }
-  const _personModal4 = document.getElementById('personModal');
-  if (_personModal4 && event.target === _personModal4) {
+  const _editModal = document.getElementById('editModal');
+  if (_editModal && event.target === _editModal) {
     const personContainer = document.getElementById('personMiniMapContainer');
     if (personContainer) personContainer.style.display = 'none';
-    _personModal4.style.display = 'none';
+    _editModal.classList.remove('active');
   }
 };
 
